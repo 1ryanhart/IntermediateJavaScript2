@@ -27,12 +27,15 @@ app.get('/apod', async (req, res) => {
 
 // get rover photos
 app.get('/:roverName/photo', async (req, res) => {
-    let roverName = req.params.roverName;
+    let roverName = req.params.roverName.toLowerCase();
     try {
         let images = await fetch(`https://api.nasa.gov/mars-photos/api/v1/rovers/${roverName}/latest_photos?&api_key=${process.env.API_KEY}`)
             .then(res => res.json())
             .then(res => res['latest_photos'].slice(-5))
-        res.json({roverName :images})
+        if (roverName == 'curiosity') {res.send({curiousty :images});}
+        else if (roverName == 'opportunity') {res.send({opportunity :images});}
+        else if (roverName == 'spirit') {res.send({spirit :images});}
+
     } catch (err) {
         console.log('error:', err);
     }
