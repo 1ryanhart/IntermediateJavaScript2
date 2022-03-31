@@ -84,6 +84,8 @@ body {
   font-family: Arial;
   min-height: 100vh;
   background-color: #f2f2f2;
+  position: relative;
+  min-height: 100vh;
 }
 
 header {
@@ -132,6 +134,7 @@ header {
 main {
   flex: 1;
   padding: 20px;
+  padding-bottom: 2.5rem
 }
 
 .rover_section {
@@ -152,8 +155,17 @@ main {
 
 footer {
   /* footer styles */
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  background-color: black;
 }
 
+footer p, footer a {
+  color: white;
+  text-align: center;
+  padding: 5px;
+}
 
 /* -------------------  TABLET  --------------------- */
 @media (min-width: 768px) {

@@ -33,6 +33,9 @@ app.get('/:roverName/photo', async (req, res) => {
             .then(res => res.json())
             .then(res => res['latest_photos'].slice(-5))
         res.send( { images } )
+        // if (roverName =='curiosity') { res.send( { curiosity : images } )}
+        // else if (roverName =='spirit') { res.send( { spirit : images} )}
+        // else { res.send( { opportunity : images} )}
     } catch (err) {
         console.log('error:', err);
     }

@@ -13,7 +13,6 @@ function showSlides(n) {
 }
 
 let store = {
-    user: { name: "Student" },
     apod: '',
     rovers: ['Curiosity', 'Opportunity', 'Spirit'],
     selection: 'home',
@@ -52,7 +51,6 @@ const generateHomeContent = (store, apod, rovers) => {
             ${header(store, rovers)}
         </header>
         <main>
-            ${Greeting(store.user.name)}
             <section>
                 <h3>Put things on the page!</h3>
                 <p>Here is an example section.</p>
@@ -67,7 +65,7 @@ const generateHomeContent = (store, apod, rovers) => {
                 ${ImageOfTheDay(apod)}
             </section>
         </main>
-        <footer></footer>
+        <footer>${footer()}</footer>
     `)
 }
 
@@ -82,24 +80,11 @@ const generateRoverContent = (store, selection, rovers, roverImages) => {
                 ${displayRoverData(selection, roverImages)}
             </section>
         </main>
-        <footer></footer>
+        <footer>${footer()}</footer>
     `)
 }
 
 // ------------------------------------------------------  COMPONENTS
-
-// Pure function that renders conditional information -- THIS IS JUST AN EXAMPLE, you can delete it.
-const Greeting = (name) => {
-    if (name) {
-        return `
-            <h1>Welcome, ${name}!</h1>
-        `
-    }
-
-    return `
-        <h1>Hello!</h1>
-    `
-}
 
 const menuSelect = (rover, state) => {
     let selection = rover
@@ -122,37 +107,42 @@ const header = (state, rovers) => {
             </nav>`
 }
 
-// Example of a pure function that renders infomation requested from the backend
+const footer = () => {
+    return (`
+    <p>All data from <a href="https://api.nasa.gov/">NASA API</a></p>
+    `)
+}
 
 const ImageOfTheDay = (apod) => {
 
-    // If image does not already exist, or it is not from today -- request it again
     const today = new Date()
     const todayFormatted = today.toISOString().split('T')[0].toString()
 
+    // If image does not already exist, or it is not from today -- request it again
     if (!apod || apod.image.date !== todayFormatted ) {
         getImageOfTheDay(store)    
     }
 
     // check if the photo of the day is actually type video!
-    if (apod.media_type === "video") {
+    if (store.apod.media_type === "video") {
         return (`
-            <p>See today's featured video <a href="${apod.image.url}">here</a></p>
-            <p>${apod.image.title}</p>
-            <p>${apod.image.explanation}</p>
+            <p>See today's featured video <a href="${store.apod.image.url}">here</a></p>
+            <p>${store.apod.image.title}</p>
+            <p>${store.apod.image.explanation}</p>
         `)
     } else {
         return (`
-            <img src="${apod.image.url}" height="350px" width="100%" />
-            <p>${apod.image.explanation}</p>
+            <img src="${store.apod.image.url}" height="350px" width="100%" />
+            <p>${store.apod.image.explanation}</p>
         `)
     }
 }
 
 const displayRoverData = (selection, roverImages) => {
-    if (roverImages == '') {
+    if (roverImages == '' || roverImages.images[0].rover.name.toLowerCase() != selection) {
         getRoverImages(store)
     }
+
     //loop through all the photos in the roverImages to to create each photo block
     //the first image in the array is set to display:block
     let photoItems = roverImages['images'].map((image,index,array) => {
@@ -184,7 +174,6 @@ const displayRoverData = (selection, roverImages) => {
             <p>Rover data</p>
             ${getRoverInfo(store.roverImages)}
         </div>
-
         `)
 }
 
@@ -218,7 +207,7 @@ const getImageOfTheDay = (state) => {
 
 const getRoverImages = (state) => {
     let { selection, roverImages } = state
-
+    console.log(selection)
     fetch(`http://localhost:3000/${selection}/photo`)
         .then(res => res.json())
         .then(roverImages => updateStore(store, { roverImages }))
