@@ -1,41 +1,23 @@
-let slideIndex = 1;
-
 //------------------------------------------------------ SLIDESHOW
-
-
-// Next/previous controls
-function plusSlides(n) {
-    showSlides(slideIndex += n);
-}
-
-function currentSlide(n) {
-    showSlides(slideIndex = n);
-  }
 
 function showSlides(n) {
     let i;
     let slides = document.getElementsByClassName("mySlides");
     let thumbnails = document.getElementsByClassName("demo");
-    let captionText = document.getElementById("caption");
-    if (n > slides.length) {slideIndex = 1}
-    if (n < 1) {slideIndex = slides.length}
     for (i = 0; i < slides.length; i++) {
       slides[i].style.display = "none";
       thumbnails[i].className = thumbnails[i].className.replace(" active", "");
     }
-    slides[slideIndex-1].style.display = "block";
-    thumbnails[slideIndex-1].className += " active";
-    captionText.innerHTML = thumbnails[slideIndex-1].alt;
+    slides[n].style.display = "block";
+    thumbnails[n].className += " active";
 }
-
 
 let store = {
     user: { name: "Student" },
     apod: '',
     rovers: ['Curiosity', 'Opportunity', 'Spirit'],
     selection: 'home',
-    roverImages: '',
-    slideIndex: 1
+    roverImages: ''
 }
 
 // add our markup to the page
@@ -51,12 +33,21 @@ const render = async (root, state) => {
 }
 
 
-// create content
+// create content. A HOF
 const App = (state) => {
     let {selection, rovers, apod, roverImages } = state
 
-    if (selection =='home') {
-        return `
+    if (selection =='home') {return generateHomeContent(state, apod, rovers)}
+    else {return generateRoverContent(state, selection, rovers, roverImages)}
+}
+
+// listening for load event because page should load before any JS is called
+window.addEventListener('load', () => {
+    render(root, store)
+})
+
+const generateHomeContent = (store, apod, rovers) => {
+    return (`
         <header>
             ${header(store, rovers)}
         </header>
@@ -74,16 +65,14 @@ const App = (state) => {
                     but generally help with discoverability of relevant imagery.
                 </p>
                 ${ImageOfTheDay(apod)}
-
-
             </section>
         </main>
         <footer></footer>
-    `
-    }
-    else {
-        console.log(`inside the else block in App function. logging 'roverImages'${roverImages}`)
-        return `
+    `)
+}
+
+const generateRoverContent = (store, selection, rovers, roverImages) => {
+    return (`
         <header>
             ${header(store, rovers)}
         </header>
@@ -94,14 +83,8 @@ const App = (state) => {
             </section>
         </main>
         <footer></footer>
-    `
-    }
+    `)
 }
-
-// listening for load event because page should load before any JS is called
-window.addEventListener('load', () => {
-    render(root, store)
-})
 
 // ------------------------------------------------------  COMPONENTS
 
@@ -183,7 +166,7 @@ const displayRoverData = (selection, roverImages) => {
     let thumbnailItems = roverImages['images'].map((image,index,array) => {
         return `
         <div class="column">
-        <img class="demo cursor" src=${image.img_src} style="width:100%" onclick="currentSlide(${index+1})" alt="Rover photo">
+        <img class="demo cursor ${(index==0) ? 'active' : ''}" src=${image.img_src} style="width:100%" onclick="showSlides(${index})" alt="Rover photo">
         </div>`
     }).join('')
 
@@ -192,31 +175,39 @@ const displayRoverData = (selection, roverImages) => {
             <p>Photo slideshow</p>
             <div class="container">
                 ${photoItems}
-                <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
-                <a class="next" onclick="plusSlides(1)">&#10095;</a>
-                <div class="caption-container">
-                    <p id="caption">Caption</p>
-                </div>
-                    ${thumbnailItems}
                 <div class="row">
+                    ${thumbnailItems}
                 </div>
             </div>
         </div>
         <div class="tile">
             <p>Rover data</p>
-            <ul>
-                <li>list item</li>
-            </ul>
+            ${getRoverInfo(store.roverImages)}
         </div>
 
         `)
 }
 
+const getRoverInfo = (roverImages) => {
+    let launchDate = roverImages.images[0].rover.launch_date
+    let landingDate = roverImages.images[0].rover.landing_date
+    let status = roverImages.images[0].rover.status
+    let lastPhotoDate = roverImages.images[0].earth_date
+
+    return (`
+    <ul>
+        <li>Launch Date: ${launchDate}</li>
+        <li>Landing Date: ${landingDate}</li>
+        <li>Status: ${status}</li>
+        <li>lastPhotoDate: ${lastPhotoDate}</li>        
+    </ul>
+    `)
+}
 // ------------------------------------------------------  API CALLS
 
 // Example API call
 const getImageOfTheDay = (state) => {
-    let { apod } = state
+    // let { apod } = state
 
     fetch(`http://localhost:3000/apod`)
         .then(res => res.json())
