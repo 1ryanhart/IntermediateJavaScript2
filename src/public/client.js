@@ -1,12 +1,10 @@
-const Immutable = require('immutable')
+// const Immutable = require("immutable");
 
 //------------------------------------------------------ SLIDESHOW
-
 function showSlides(n) {
-    let i;
     let slides = document.getElementsByClassName("mySlides");
     let thumbnails = document.getElementsByClassName("demo");
-    for (i = 0; i < slides.length; i++) {
+    for (let i = 0; i < slides.length; i++) {
       slides[i].style.display = "none";
       thumbnails[i].className = thumbnails[i].className.replace(" active", "");
     }
@@ -14,18 +12,26 @@ function showSlides(n) {
     thumbnails[n].className += " active";
 }
 
-let store = {
+let store = Immutable.Map({
     apod: '',
-    rovers: ['Curiosity', 'Opportunity', 'Spirit'],
+    rovers: Immutable.List(['Curiosity', 'Opportunity', 'Spirit']),
     selection: 'home',
     roverImages: ''
-}
+})
+// let store = {
+//     apod: '',
+//     rovers: ['Curiosity', 'Opportunity', 'Spirit'],
+//     selection: 'home',
+//     roverImages: ''
+// }
+
 
 // add our markup to the page
 const root = document.getElementById('root')
 
-const updateStore = (store, newState) => {
-    store = Object.assign(store, newState)
+const updateStore = (state, newState) => {
+    // store = Object.assign(store, newState)
+    store = state.merge(newState)
     render(root, store)
 }
 
@@ -36,10 +42,9 @@ const render = async (root, state) => {
 
 // create content. A HOF
 const App = (state) => {
-    let {selection, rovers, apod, roverImages } = state
-
-    if (selection =='home') {return generateHomeContent(state, apod, rovers)}
-    else {return generateRoverContent(state, selection, rovers, roverImages)}
+    let {selection, rovers, apod, roverImages } = state.toJS()
+    if (selection =='home') {return generateHomeContent(state.toJS(), apod, rovers)}
+    else {return generateRoverContent(state.toJS(), selection, rovers, roverImages)}
 }
 
 // listening for load event because page should load before any JS is called
@@ -47,31 +52,31 @@ window.addEventListener('load', () => {
     render(root, store)
 })
 
-const generateHomeContent = (store, apod, rovers) => {
+const generateHomeContent = (state, apod, rovers) => {
     return (`
         <header>
-            ${header(store, rovers)}
+            ${header(state, rovers)}
         </header>
         <main>
             <section class="home_section">
                 <h3>Welcome to the Mars Rover Dashboard!</h3>
                 </br><p>Astronomy Picture of the Day</p>
-                ${ImageOfTheDay(apod)}
+                ${ImageOfTheDay(state, apod)}
             </section>
         </main>
         <footer>${footer()}</footer>
     `)
 }
 
-const generateRoverContent = (store, selection, rovers, roverImages) => {
+const generateRoverContent = (state, selection, rovers, roverImages) => {
     return (`
         <header>
-            ${header(store, rovers)}
+            ${header(state, rovers)}
         </header>
         <main>
             <h3>${selection}</h3>
             <section class="rover_section">
-                ${displayRoverData(selection, roverImages)}
+                ${displayRoverData(state, selection, roverImages)}
             </section>
         </main>
         <footer>${footer()}</footer>
@@ -90,12 +95,12 @@ const header = (state, rovers) => {
     let listItems = rovers.map(rover => {
         let selectedClass = (selection===rover.toLowerCase() ? 'active' : '')
         return `
-            <li onclick="menuSelect(this.innerHTML.toLowerCase(), store)" class="tab ${selectedClass}">${rover}</li>
+            <li onclick="menuSelect(this.innerHTML.toLowerCase(), store.toJS())" class="tab ${selectedClass}">${rover}</li>
         `
     }).join('')
     let selectedClass = (selection==='home' ? 'active' : '')
     return `
-            <li class="nav_home ${selectedClass}" onclick="menuSelect(this.innerHTML.toLowerCase(), store)">Home</li>
+            <li class="nav_home ${selectedClass}" onclick="menuSelect(this.innerHTML.toLowerCase(), store.toJS())">Home</li>
             <nav>
                 <ul class="nav_links">${listItems}</ul>
             </nav>`
@@ -107,34 +112,34 @@ const footer = () => {
     `)
 }
 
-const ImageOfTheDay = (apod) => {
+const ImageOfTheDay = (state, apod) => {
 
     const today = new Date()
     const todayFormatted = today.toISOString().split('T')[0].toString()
 
     // If image does not already exist, or it is not from today -- request it again
     if (!apod || apod.image.date !== todayFormatted ) {
-        getImageOfTheDay(store)    
+        getImageOfTheDay(state)    
     }
 
     // check if the photo of the day is actually type video!
-    if (store.apod.media_type === "video") {
+    if (state.apod.media_type === "video") {
         return (`
-            <p>See today's featured video <a href="${store.apod.image.url}">here</a></p>
-            <p>${store.apod.image.title}</p>
-            <p>${store.apod.image.explanation}</p>
+            <p>See today's featured video <a href="${state.apod.image.url}">here</a></p>
+            <p>${state.apod.image.title}</p>
+            <p>${state.apod.image.explanation}</p>
         `)
     } else {
         return (`
-            <img src="${store.apod.image.url}" height="350px" width="100%" />
-            <p>${store.apod.image.explanation}</p>
+            <img src="${state.apod.image.url}" height="350px" width="100%" />
+            <p>${state.apod.image.explanation}</p>
         `)
     }
 }
 
-const displayRoverData = (selection, roverImages) => {
+const displayRoverData = (state, selection, roverImages) => {
     if (roverImages == '' || roverImages.images[0].rover.name.toLowerCase() != selection) {
-        getRoverImages(store)
+        getRoverImages(state)
     }
 
     //loop through all the photos in the roverImages to to create each photo block
@@ -166,7 +171,7 @@ const displayRoverData = (selection, roverImages) => {
         </div>
         <div class="tile">
             <p>Rover data</p>
-            ${getRoverInfo(store.roverImages)}
+            ${getRoverInfo(state.roverImages)}
         </div>
         `)
 }
@@ -190,18 +195,13 @@ const getRoverInfo = (roverImages) => {
 
 // Example API call
 const getImageOfTheDay = (state) => {
-    // let { apod } = state
-
     fetch(`http://localhost:3000/apod`)
         .then(res => res.json())
         .then(apod => updateStore(store, { apod }))
-
-    // return data
 }
 
 const getRoverImages = (state) => {
-    let { selection, roverImages } = state
-    console.log(selection)
+    let { selection } = state
     fetch(`http://localhost:3000/${selection}/photo`)
         .then(res => res.json())
         .then(roverImages => updateStore(store, { roverImages }))
