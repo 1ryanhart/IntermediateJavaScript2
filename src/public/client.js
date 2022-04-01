@@ -1,5 +1,3 @@
-// const Immutable = require("immutable");
-
 //------------------------------------------------------ SLIDESHOW
 function showSlides(n) {
     let slides = document.getElementsByClassName("mySlides");
@@ -18,13 +16,6 @@ let store = Immutable.Map({
     selection: 'home',
     roverImages: ''
 })
-// let store = {
-//     apod: '',
-//     rovers: ['Curiosity', 'Opportunity', 'Spirit'],
-//     selection: 'home',
-//     roverImages: ''
-// }
-
 
 // add our markup to the page
 const root = document.getElementById('root')
@@ -85,7 +76,7 @@ const generateRoverContent = (state, selection, rovers, roverImages) => {
 
 // ------------------------------------------------------  COMPONENTS
 
-const menuSelect = (rover, state) => {
+const menuSelect = (rover) => {
     let selection = rover
     updateStore(store, {selection})
 }
@@ -95,12 +86,12 @@ const header = (state, rovers) => {
     let listItems = rovers.map(rover => {
         let selectedClass = (selection===rover.toLowerCase() ? 'active' : '')
         return `
-            <li onclick="menuSelect(this.innerHTML.toLowerCase(), store.toJS())" class="tab ${selectedClass}">${rover}</li>
+            <li onclick="menuSelect(this.innerHTML.toLowerCase())" class="tab ${selectedClass}">${rover}</li>
         `
     }).join('')
     let selectedClass = (selection==='home' ? 'active' : '')
     return `
-            <li class="nav_home ${selectedClass}" onclick="menuSelect(this.innerHTML.toLowerCase(), store.toJS())">Home</li>
+            <li class="nav_home ${selectedClass}" onclick="menuSelect(this.innerHTML.toLowerCase())">Home</li>
             <nav>
                 <ul class="nav_links">${listItems}</ul>
             </nav>`
