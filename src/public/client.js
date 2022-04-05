@@ -31,11 +31,11 @@ const render = async (root, state) => {
 }
 
 
-// create content. A HOF
+// create content. A HOF returning a function
 const App = (state) => {
-    let {selection, rovers, apod, roverImages } = state.toJS()
-    if (selection =='home') {return generateHomeContent(state.toJS(), apod, rovers)}
-    else {return generateRoverContent(state.toJS(), selection, rovers, roverImages)}
+    let {selection} = state.toJS()
+    if (selection =='home') {return generatePageContent(generateHomeContent, state.toJS())}
+    {return generatePageContent(generateRoverContent, state.toJS())}
 }
 
 // listening for load event because page should load before any JS is called
@@ -43,11 +43,20 @@ window.addEventListener('load', () => {
     render(root, store)
 })
 
-const generateHomeContent = (state, apod, rovers) => {
+// generate page content. A HOF taking a function as a parameter
+const generatePageContent = (contentSelectFunction, state) => {
     return (`
         <header>
-            ${header(state, rovers)}
+            ${header(state)}
         </header>
+        ${contentSelectFunction(state)}
+        <footer>${footer()}</footer>
+    `)
+}
+
+const generateHomeContent = (state) => {
+    let {apod} = state
+    return (`
         <main>
             <section class="home_section">
                 <h3>Welcome to the Mars Rover Dashboard!</h3>
@@ -55,22 +64,18 @@ const generateHomeContent = (state, apod, rovers) => {
                 ${ImageOfTheDay(state, apod)}
             </section>
         </main>
-        <footer>${footer()}</footer>
     `)
 }
 
-const generateRoverContent = (state, selection, rovers, roverImages) => {
+const generateRoverContent = (state) => {
+    let {selection, roverImages} = state
     return (`
-        <header>
-            ${header(state, rovers)}
-        </header>
         <main>
             <h3>${selection}</h3>
             <section class="rover_section">
                 ${displayRoverData(state, selection, roverImages)}
             </section>
         </main>
-        <footer>${footer()}</footer>
     `)
 }
 
@@ -81,8 +86,8 @@ const menuSelect = (rover) => {
     updateStore(store, {selection})
 }
 
-const header = (state, rovers) => {
-    let { selection } = state;
+const header = (state) => {
+    let { selection, rovers } = state;
     let listItems = rovers.map(rover => {
         let selectedClass = (selection===rover.toLowerCase() ? 'active' : '')
         return `
